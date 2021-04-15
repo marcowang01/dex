@@ -144,8 +144,6 @@ def classify(text_counts, data, stock_symbol, cv):
         return good_percent, bad_percent, best
 
 
-
-
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
     length = text_counts.shape[0]
 
@@ -172,11 +170,11 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
                     if row['Positive'] != 'empty' and row['Positive'] in feature_dict:
                         word_i = feature_dict[row['Positive']]
                         # multiplies entry by frequency in master_dict filtered if document is tagged as 'g'
-                        lil_tc[doc_i, word_i] *= float(row['Pos Freq']) * 10
+                        lil_tc[doc_i, word_i] *= float(row['Pos Freq']) * 5
                 elif data['tag'][doc_i] == 'b':
                     if row['Negative'] != 'empty' and row['Negative'] in feature_dict:
                         word_i = feature_dict[row['Negative']]
-                        lil_tc[doc_i, word_i] *= float(row['Neg Freq']) * 10
+                        lil_tc[doc_i, word_i] *= float(row['Neg Freq']) * 5
 
             pbar.update(1)
         pbar.close()

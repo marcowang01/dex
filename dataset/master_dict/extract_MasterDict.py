@@ -14,9 +14,9 @@ def extract_most_common(max_features):
         reader = csv.DictReader(m_dict)
 
         for row in tqdm(reader):
-            if int(row['Positive']) > 0:
+            if int(row['Positive']) > 0 or int(row['Interesting']) > 0:
                 positive_words.append((int(row['Word Count']) * float(row['Word Proportion']), row['Word']))
-            if int(row['Negative']) > 0:
+            if int(row['Negative']) > 0 or int(row['Litigious']) > 0:
                 negative_words.append((int(row['Word Count']) * float(row['Word Proportion']), row['Word']))
 
     positive_words.sort(key=lambda x: x[0])
