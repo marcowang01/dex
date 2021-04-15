@@ -12,15 +12,12 @@ def extract_most_common(max_features):
 
     with open("LM_MasterDict.csv", "r") as m_dict:
         reader = csv.DictReader(m_dict)
-        stop_words = stopwords
 
         for row in tqdm(reader):
             if int(row['Positive']) > 0:
                 positive_words.append((int(row['Word Count']) * float(row['Word Proportion']), row['Word']))
             if int(row['Negative']) > 0:
                 negative_words.append((int(row['Word Count']) * float(row['Word Proportion']), row['Word']))
-            if row['Word'].lower() not in stop_words:
-                words.append((int(row['Doc Count']), row['Word']))
 
     positive_words.sort(key=lambda x: x[0])
     positive_words.reverse()

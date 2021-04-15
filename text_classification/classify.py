@@ -28,6 +28,7 @@ from sklearn import metrics
 import random
 from text_classification import StockAPI
 import time
+from StopWords_Generic import stopwords
 
 classifiers = [("BernoulliNB", BernoulliNB()),
         ("ComplementNB", ComplementNB()),
@@ -62,7 +63,7 @@ def preprocess(stock_symbol, new_speech=None):
 
     if config.DO_TRAINING:
         tokens = RegexpTokenizer(r'[a-zA-Z]+')
-        cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words="english", ngram_range=(1, 2))
+        cv = CountVectorizer(tokenizer=tokens.tokenize, stop_words='english', ngram_range=(1, 2))
 
         print("\nGenerating bag of words:")
         text_counts = cv.fit_transform(data['content'])  # creates a doc-term matrix
