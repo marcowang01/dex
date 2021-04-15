@@ -29,23 +29,17 @@ def predict():
     if request.method == 'POST':
         speech = request.form['article']
         symbol = request.form['symbol']
-        _speech = [speech]
 
-        text_counts, data, stock_symbol, cv = c.preprocess(symbol, _speech)
-        prediction = c.classify(text_counts, data, stock_symbol, cv)
+        text_counts, data, stock_symbol, cv = c.preprocess(symbol, speech)
+        g, b, best = c.classify(text_counts, data, stock_symbol, cv)
 
-        tags = ['g', 'b']
-
-        g_prediction = F"{prediction[0][0]:.2%}"
-        b_prediction = F"{prediction[0][1]:.2%}"
-
-        best = max(prediction[0][1], prediction[0][0])
-        prediction = tags[np.where(prediction[0] == best)[0][0]]
+        g_prediction = F"{g:.2%}"
+        b_prediction = F"{b:.2%}"
 
         return render_template('result.html',
                                g_prediction=g_prediction,
                                b_prediction=b_prediction,
-                               prediction=prediction)
+                               prediction=best)
 
     return render_template('result.html',
                            g_prediction="0.00%",

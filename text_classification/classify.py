@@ -29,18 +29,20 @@ import random
 from text_classification import StockAPI
 import time
 
-classifiers = {
-    "BernoulliNB": BernoulliNB(),
-    "ComplementNB": ComplementNB(),
-    "MultinomialNB": MultinomialNB(alpha=0.3),
-    # "KNeighborsClassifier": KNeighborsClassifier(),
-    # "DecisionTreeClassifier": DecisionTreeClassifier(),
-    # "RandomForestClassifier": RandomForestClassifier(),
-    # "LogisticRegression": LogisticRegression(max_iter=10000),
-    # "SGDClassifier": SGDClassifier(),
-    # "AdaBoostClassifier": AdaBoostClassifier(),
-    # "MLPClassifier": MLPClassifier(max_iter=1000),
-}
+classifiers = [("BernoulliNB", BernoulliNB()),
+        ("ComplementNB", ComplementNB()),
+        ("MultinomialNB", MultinomialNB()),
+        # ("KNeighborsClassifier", KNeighborsClassifier()),
+        # ("DecisionTreeClassifier", DecisionTreeClassifier()),
+        # ("RandomForestClassifier", RandomForestClassifier()),
+        # ("LogisticRegression", LogisticRegression(max_iter=1000)),
+        # ("SGDClassifier", SGDClassifier()),
+        # ("AdaBoostClassifier", AdaBoostClassifier()),
+        # ("MLPClassifier", MLPClassifier(max_iter=1000)),
+        # ("SVC", SVC()),
+        # ("NuSVC", NuSVC()),
+        # ("LinearSVC", LinearSVC())
+]
 
 
 TAGS = ['g', 'b']
@@ -73,7 +75,9 @@ def preprocess(stock_symbol, new_speech=None):
         cv = pickle.load(open("text_classification/pickles/cv.sav", 'rb'))
 
         print("\nGenerating bag of words:")
-        text_counts = cv.transform(new_speech)
+        # turn new articles into sentences
+        sentences = sent_tokenize(new_speech)
+        text_counts = cv.transform(sentences)
 
         if config.DO_INTEGRATION:
             text_counts = integrate_db("dataset/master_dict/master_dict_filtered.csv", data, text_counts, cv)
@@ -93,7 +97,9 @@ def classify(text_counts, data, stock_symbol, cv):
         # 0: accuracy, 1: name of clf: 2: clf itself
         highest_score = [0, "", None]
         # trains all classifiers within classifiers dictionary
-        for name, sklearn_clf in classifiers.items():
+        for tup in classifiers:
+            name = tup[0]
+            sklearn_clf = tup[1]
             start = time.time()
             clf = sklearn_clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
@@ -119,10 +125,24 @@ def classify(text_counts, data, stock_symbol, cv):
     else:
         CLF_NAME = config.CLF_NAME
         PERCENT = config.PERCENT
-
+        print(f"using {CLF_NAME} on {PERCENT}")
         clf = pickle.load(open(f"text_classification/pickles/{CLF_NAME}_{PERCENT}_{stock_symbol}.sav", 'rb'))
 
-        return clf.predict_proba(text_counts)
+        scores = clf.predict_proba(text_counts)
+        good_percent = 0
+        bad_percent = 0
+        length = text_counts.shape[0]
+        for sent_pred in scores:
+            good_percent += sent_pred[0]
+            bad_percent += sent_pred[1]
+
+        good_percent = good_percent / float(length)
+        bad_percent = bad_percent / float(length)
+        best = "g" if good_percent > bad_percent else "b"
+
+        return good_percent, bad_percent, best
+
+
 
 
 def integrate_db(db_path, data, text_counts, cv: CountVectorizer):

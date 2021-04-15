@@ -34,3 +34,4 @@ PLUG: 68.92% - ComplementNB
 PLUG: 68.92% - ComplementNB
 PLUG: 68.92% - ComplementNB
 PLUG: 68.92% - ComplementNB
+PLUG: 69.42% - MultinomialNB
