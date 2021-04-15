@@ -35,3 +35,5 @@ PLUG: 69.42% - MultinomialNB
 PLUG: 68.52% - MultinomialNB - with generic stop words
 PLUG: 69.42% - MultinomialNB - without alpha= 0.3
 PLUG: 69.42% - MultinomialNB
+PLUG: 69.42% - MultinomialNB - with interesting and litigous
+PLUG: 69.42% - MultinomialNB - *5 instead of *10

@@ -18,9 +18,9 @@ def scrape_fed_statements():
         data = FOMC.find_statements()
 
         data.info()
-        data.to_pickle("dataset/FOMC_statements.pkl")
+        data.to_pickle("../../dataset/Fed/FOMC_statements.pkl")
 
-    data = pd.read_pickle("dataset/FOMC_statements.pkl")
+    data = pd.read_pickle("../../dataset/Fed/FOMC_statements.pkl")
 
     for i in data.index:
         d = pd.to_datetime(i)
@@ -29,16 +29,16 @@ def scrape_fed_statements():
 
     data.info()
 
-    print(data["dataset/FOMC_Statements"][0])
+    # print(data["dataset/FOMC_Statements"][0])
 
-    data.to_pickle("dataset/FOMC_statements.pkl")
+    data.to_pickle("../../dataset/Fed/FOMC_statements.pkl")
 
 
 def scrape_powell_speeches():
     data_list = []
     # format_dates()
 
-    with open("scraping/powell/formatted_dates.txt", "r") as f:
+    with open("formatted_dates.txt", "r") as f:
         for line in f:
             date = line[0:line.find('\n')]
             url = F"https://www.federalreserve.gov/newsevents/speech/powell{date}.htm"
@@ -82,7 +82,7 @@ def scrape_powell_speeches():
 
                     text = text + l.getText()
 
-            print(text)
+            # print(text)
 
             article_dict = {
                 "date": F"{line[0:8]}",
@@ -94,15 +94,15 @@ def scrape_powell_speeches():
 
             data_list.append(article_dict)
 
-    with open("dataset/Fed/powell_data.json", "w") as outfile:
+    with open("../../dataset/Fed/powell_data.json", "w") as outfile:
         json.dump(data_list, outfile)
 
     return 0
 
 
 def format_dates():
-    with open("scraping/speech_dates.txt", "r") as original:
-        with open("scraping/formatted_dates.txt", "w") as formatted:
+    with open("formatted_dates.txt", "r") as original:
+        with open("formatted_dates.txt", "w") as formatted:
             for line in original:
                 m = int(line[0:line.find("/")])
                 d = int(line[line.find("/") + 1:line.rfind("/")])
@@ -117,4 +117,4 @@ def format_dates():
 
 if __name__ == '__main__':
     scrape_powell_speeches()
-    # scrape_fed_statements()
+    scrape_fed_statements()
