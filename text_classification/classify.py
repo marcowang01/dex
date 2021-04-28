@@ -32,7 +32,7 @@ from StopWords_Generic import stopwords
 
 classifiers = [("BernoulliNB", BernoulliNB()),
         ("ComplementNB", ComplementNB()),
-        ("MultinomialNB", MultinomialNB()),
+        ("MultinomialNB", MultinomialNB(        )),
         # ("KNeighborsClassifier", KNeighborsClassifier()),
         # ("DecisionTreeClassifier", DecisionTreeClassifier()),
         # ("RandomForestClassifier", RandomForestClassifier()),
@@ -68,10 +68,10 @@ def preprocess(stock_symbol, new_speech=None):
         print("\nGenerating bag of words:")
         text_counts = cv.fit_transform(data['content'])  # creates a doc-term matrix
         print(F"Matrix size: {text_counts.shape}")
-        pickle.dump(cv, open("./pickles/cv.sav", 'wb'))
+        pickle.dump(cv, open("text_classification/pickles/cv.sav", 'wb'))
 
         if config.DO_INTEGRATION:
-            text_counts = integrate_db("../dataset/master_dict/master_dict_filtered.csv", data, text_counts, cv)
+            text_counts = integrate_db("dataset/master_dict/master_dict_filtered.csv", data, text_counts, cv)
     else:
         cv = pickle.load(open("text_classification/pickles/cv.sav", 'rb'))
 
@@ -120,7 +120,7 @@ def classify(text_counts, data, stock_symbol, cv):
 
         log_result(highest_score[1], highest_score[0], stock_symbol)
         pickle.dump(highest_score[2],
-                    open(F"./pickles/{highest_score[1]}_{highest_score[0]:.2%}_{stock_symbol}.sav",
+                    open(F"text_classification/pickles/{highest_score[1]}_{highest_score[0]:.2%}_{stock_symbol}.sav",
                          'wb'))
         return None
     else:
@@ -151,7 +151,7 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
         feature_list = cv.get_feature_names()
         # translates list of features in dict {word => index}
         feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
-        pickle.dump(feature_dict, open("./pickles/feature_dict.sav", 'wb'))
+        pickle.dump(feature_dict, open("text_classification/pickles/feature_dict.sav", 'wb'))
     else:
         feature_dict = pickle.load(open("text_classification/pickles/feature_dict.sav", 'rb'))
 
@@ -185,7 +185,7 @@ def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
 def read_data(stock_symbol, stock: StockAPI.Quote = None):
     if config.DO_GET_QUOTES and config.DO_TRAINING:
         print("reading speeches...")
-        data = pd.read_json("../dataset/Fed/powell_data.json")
+        data = pd.read_json("dataset/Fed/powell_data.json")
 
         tags = []
         print("reading quotes...")
@@ -229,7 +229,7 @@ def read_data(stock_symbol, stock: StockAPI.Quote = None):
         # converts list of dictionary into dataframe object
         data = pd.DataFrame(sentence_list)
 
-        data.to_pickle(f"../dataset/Fed/powell_{stock_symbol}.pkl")
+        data.to_pickle(f"dataset/Fed/powell_{stock_symbol}.pkl")
     else:
         data = pickle.load(open(f"dataset/Fed/powell_{stock_symbol}.pkl", 'rb'))
 
@@ -248,7 +248,6 @@ def log_result(clf_name, score, stock_symbol):
 
 if __name__ == '__main__':
 
-    tickers = ["PLUG"]
-    for t in tickers:
+    for t in config.tickers:
         text_counts, data, stock_symbol, cv = preprocess(t)
         classify(text_counts, data, stock_symbol, cv)
