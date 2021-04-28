@@ -1,9 +1,9 @@
 from alpha_vantage.timeseries import TimeSeries
-from config import API_KEY
+from config import StockAPI_KEY
 from datetime import datetime, timedelta
 
 # Input API Key
-key = API_KEY
+key = StockAPI_KEY
 
 class Quote():
     def __init__(self, symbol, tp):
