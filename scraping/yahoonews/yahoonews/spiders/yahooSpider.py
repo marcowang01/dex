@@ -1,6 +1,5 @@
 import scrapy
-from yahoonews.yahoonews.items import YahoonewsItem
-from scrapy.http import request
+from scraping.yahoonews.yahoonews.items import YahoonewsItem
 import config
 
 class ArticlesSpider(scrapy.Spider):

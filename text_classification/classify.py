@@ -32,7 +32,7 @@ from StopWords_Generic import stopwords
 
 classifiers = [("BernoulliNB", BernoulliNB()),
         ("ComplementNB", ComplementNB()),
-        ("MultinomialNB", MultinomialNB(        )),
+        ("MultinomialNB", MultinomialNB()),
         # ("KNeighborsClassifier", KNeighborsClassifier()),
         # ("DecisionTreeClassifier", DecisionTreeClassifier()),
         # ("RandomForestClassifier", RandomForestClassifier()),
@@ -45,8 +45,6 @@ classifiers = [("BernoulliNB", BernoulliNB()),
         # ("LinearSVC", LinearSVC())
 ]
 
-
-TAGS = ['g', 'b']
 
 
 def preprocess(stock_symbol, new_speech=None):
@@ -68,21 +66,19 @@ def preprocess(stock_symbol, new_speech=None):
         print("\nGenerating bag of words:")
         text_counts = cv.fit_transform(data['content'])  # creates a doc-term matrix
         print(F"Matrix size: {text_counts.shape}")
-        pickle.dump(cv, open("text_classification/pickles/cv.sav", 'wb'))
+        # path = "text_classification/pickles/cv.sav"
+        path = "./pickles/cv.sav"
+        pickle.dump(cv, open(path, 'wb'))
 
-        if config.DO_INTEGRATION:
-            text_counts = integrate_db("dataset/master_dict/master_dict_filtered.csv", data, text_counts, cv)
     else:
-        cv = pickle.load(open("text_classification/pickles/cv.sav", 'rb'))
+        # path = "text_classification/pickles/cv.sav"
+        path = "./pickles/cv.sav"
+        cv = pickle.load(open(path, 'rb'))
 
         print("\nGenerating bag of words:")
         # turn new articles into sentences
         sentences = sent_tokenize(new_speech)
         text_counts = cv.transform(sentences)
-
-        if config.DO_INTEGRATION:
-            text_counts = integrate_db("dataset/master_dict/master_dict_filtered.csv", data, text_counts, cv)
-
 
 
     return text_counts, data, stock_symbol, cv
@@ -116,18 +112,21 @@ def classify(text_counts, data, stock_symbol, cv):
                 highest_score[2] = clf
 
             print(F"{accuracy:.2%} - {stock_symbol}")
-            # print(classification_report(y_test, y_pred, target_names=TAGS))
+            print(classification_report(y_test, y_pred, target_names=config.TAGS))
 
         log_result(highest_score[1], highest_score[0], stock_symbol)
-        pickle.dump(highest_score[2],
-                    open(F"text_classification/pickles/{highest_score[1]}_{highest_score[0]:.2%}_{stock_symbol}.sav",
-                         'wb'))
+        # path = F"text_classification/pickles/{highest_score[1]}_{highest_score[0]:.2%}_{stock_symbol}.sav"
+        path = F"./pickles/{highest_score[1]}_{highest_score[0]:.2%}_{stock_symbol}.sav"
+        pickle.dump(highest_score[2], open(path,'wb'))
         return None
+
     else:
         CLF_NAME = config.CLF_NAME
         PERCENT = config.PERCENT
         print(f"using {CLF_NAME} on {PERCENT}")
-        clf = pickle.load(open(f"text_classification/pickles/{CLF_NAME}_{PERCENT}_{stock_symbol}.sav", 'rb'))
+        # path = f"text_classification/pickles/{CLF_NAME}_{PERCENT}_{stock_symbol}.sav"
+        path = f"./pickles/{CLF_NAME}_{PERCENT}_{stock_symbol}.sav"
+        clf = pickle.load(open(path, 'rb'))
 
         scores = clf.predict_proba(text_counts)
         good_percent = 0
@@ -141,51 +140,17 @@ def classify(text_counts, data, stock_symbol, cv):
         bad_percent = bad_percent / float(length)
         best = "g" if good_percent > bad_percent else "b"
 
+        print(f"Good: {good_percent:.2%}\nBad: {bad_percent:.2%}")
+
         return good_percent, bad_percent, best
-
-
-def integrate_db(db_path, data, text_counts, cv: CountVectorizer):
-    length = text_counts.shape[0]
-
-    if config.DO_TRAINING:
-        feature_list = cv.get_feature_names()
-        # translates list of features in dict {word => index}
-        feature_dict = {feature_list[i]: i for i in range(0, len(feature_list))}
-        pickle.dump(feature_dict, open("text_classification/pickles/feature_dict.sav", 'wb'))
-    else:
-        feature_dict = pickle.load(open("text_classification/pickles/feature_dict.sav", 'rb'))
-
-    lil_tc = sparse.lil_matrix(text_counts)  # converts text counts from csr matric to lil matrix to increase efficiency
-
-    with open(db_path, 'r') as f:
-        reader = csv.DictReader(f)
-        pbar = tqdm(total=length)  # makes a new progress bar
-
-        # iterate through all documents
-        for doc_i in range(length):
-            # iterate through each word in filtered_master_dict
-            for row in reader:
-                # for positive words check if they exist in text_counts' features
-                if data['tag'][doc_i] == 'g':
-                    if row['Positive'] != 'empty' and row['Positive'] in feature_dict:
-                        word_i = feature_dict[row['Positive']]
-                        # multiplies entry by frequency in master_dict filtered if document is tagged as 'g'
-                        lil_tc[doc_i, word_i] *= float(row['Pos Freq']) * 5
-                elif data['tag'][doc_i] == 'b':
-                    if row['Negative'] != 'empty' and row['Negative'] in feature_dict:
-                        word_i = feature_dict[row['Negative']]
-                        lil_tc[doc_i, word_i] *= float(row['Neg Freq']) * 5
-
-            pbar.update(1)
-        pbar.close()
-
-    return sparse.csr_matrix(lil_tc) # converts lil matrix back to csr
 
 
 def read_data(stock_symbol, stock: StockAPI.Quote = None):
     if config.DO_GET_QUOTES and config.DO_TRAINING:
         print("reading speeches...")
-        data = pd.read_json("dataset/Fed/powell_data.json")
+        # path = "dataset/Fed/powell_data.json"
+        path = "./../dataset/Fed/powell_data.json"
+        data = pd.read_json(path)
 
         tags = []
         print("reading quotes...")
@@ -206,9 +171,9 @@ def read_data(stock_symbol, stock: StockAPI.Quote = None):
 
             # if negative --> 'b' ...
             if delta > 0:
-                tag = TAGS[0]
+                tag = config.TAGS[0]
             else:
-                tag = TAGS[1]
+                tag = config.TAGS[1]
 
             tags.append(tag)
         # insert new column into dataframe object
@@ -228,10 +193,13 @@ def read_data(stock_symbol, stock: StockAPI.Quote = None):
                 sentence_list.append(temp_dict)
         # converts list of dictionary into dataframe object
         data = pd.DataFrame(sentence_list)
-
-        data.to_pickle(f"dataset/Fed/powell_{stock_symbol}.pkl")
+        # path = f"dataset/Fed/powell_{stock_symbol}_df.pkl"
+        path = f"./../dataset/Fed/powell_{stock_symbol}_df.pkl"
+        data.to_pickle(path)
     else:
-        data = pickle.load(open(f"dataset/Fed/powell_{stock_symbol}.pkl", 'rb'))
+        # path = f"dataset/Fed/powell_{stock_symbol}_df.pkl"
+        path = f"./../dataset/Fed/powell_{stock_symbol}_df.pkl"
+        data = pickle.load(open(path, 'rb'))
 
     print("\n5 docs:")
     for i in [0, 1000, 2000, 3000, 4000, 5000]:
@@ -249,5 +217,5 @@ def log_result(clf_name, score, stock_symbol):
 if __name__ == '__main__':
 
     for t in config.tickers:
-        text_counts, data, stock_symbol, cv = preprocess(t)
+        text_counts, data, stock_symbol, cv = preprocess(t, config.newSpeech)
         classify(text_counts, data, stock_symbol, cv)
