@@ -7,6 +7,7 @@ CLF_NAME = 'MultinomialNB'
 PERCENT = "69.42%"
 TAGS = ['g', 'b']
 tickers = ["PLUG"]
+search_term = "jerome powell"
 
 StockAPI_KEY = "RG7MF5NCP690TYAJ"
 RapidAPI_KEY = "7d3fa1610amsh9c5029b73bf6468p113297jsn361e41d98786"
