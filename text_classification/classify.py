@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import pandas as pd
-import csv
+import yfinance as yf
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.tokenize import RegexpTokenizer
 from sklearn.model_selection import train_test_split
@@ -50,9 +50,7 @@ classifiers = [("BernoulliNB", BernoulliNB()),
 def preprocess(stock_symbol, new_speech=None):
     if config.DO_GET_QUOTES and config.DO_TRAINING:
         # tags the speeches by stock quotes
-        # creates quote object from StockAPI.py
-        stock = StockAPI.Quote(stock_symbol, '4. close')
-        data = read_data(stock_symbol, stock)
+        data = read_data(stock_symbol)
     else:
         data = read_data(stock_symbol)
 
@@ -145,29 +143,35 @@ def classify(text_counts, data, stock_symbol, cv):
         return good_percent, bad_percent, best
 
 
-def read_data(stock_symbol, stock: StockAPI.Quote = None):
+def read_data(stock_symbol):
     if config.DO_GET_QUOTES and config.DO_TRAINING:
         print("reading speeches...")
         # path = "dataset/Fed/powell_data.json"
-        path = "./../dataset/Fed/powell_data.json"
-        data = pd.read_json(path)
+        path = "./../dataset/us_equities_news_dataset.csv"
+        df = pd.read_csv(path)
+        print("Raw Dataset:")
+        df.info()
 
         tags = []
         print("reading quotes...")
-        for i in tqdm(data.index):
-            date_str = str(data["date"][i])
-            Y = date_str[0:4]
-            m = date_str[4:6]
-            d = date_str[6:8]
+        for i in tqdm(df.index):
+            date_str = str(df["release_date"][i])
 
             # converts date into correct format
-            speech_date = datetime.strptime(F"{Y}-{m}-{d}", '%Y-%m-%d')
+            speech_date = datetime.strptime(date_str, '%Y-%m-%d')
             date1 = speech_date - timedelta(days=1)
             date1 = datetime.strftime(date1, '%Y-%m-%d')
             date2 = datetime.strftime(speech_date, '%Y-%m-%d')
 
+            ticker = df["ticker"][i]
             # grab stock quotes from dates
-            delta = stock.lookup(date1, date2)
+            # get_quote = StockAPI.Quote(df["ticker"][i], '4. close')
+            delta = StockAPI.get_delta(ticker, date1, date2)
+
+            # error code for invalid date -> delete row
+            if delta == 0.00001:
+                df = df.drop(i)
+                continue
 
             # if negative --> 'b' ...
             if delta > 0:
@@ -176,36 +180,22 @@ def read_data(stock_symbol, stock: StockAPI.Quote = None):
                 tag = config.TAGS[1]
 
             tags.append(tag)
-        # insert new column into dataframe object
-        data.insert(5, "tag", tags, True)
 
-        # tokenize dataframe content into sentences
-        sentence_list = []
-        for i in range(len(data)):
-            sentences = sent_tokenize(data['content'][i])
-            for s in sentences:
-                temp_dict = {
-                    'date': data['date'][i],
-                    'title': data['title'][i],
-                    'content': s,
-                    'tag': data['tag'][i]
-                }
-                sentence_list.append(temp_dict)
-        # converts list of dictionary into dataframe object
-        data = pd.DataFrame(sentence_list)
+        # insert new column into dataframe object
+        df.insert(len(df.columns), "tag", tags, True)
+
+        print("tagged dataset")
+        df.info()
+
         # path = f"dataset/Fed/powell_{stock_symbol}_df.pkl"
-        path = f"./../dataset/Fed/powell_{stock_symbol}_df.pkl"
-        data.to_pickle(path)
+        path = f"./../dataset/equities_{stock_symbol}_df.pkl"
+        df.to_pickle(path)
     else:
         # path = f"dataset/Fed/powell_{stock_symbol}_df.pkl"
         path = f"./../dataset/Fed/powell_{stock_symbol}_df.pkl"
-        data = pickle.load(open(path, 'rb'))
+        df = pickle.load(open(path, 'rb'))
 
-    print("\n5 docs:")
-    for i in [0, 1000, 2000, 3000, 4000, 5000]:
-        print(F"{data['date'][i]}: {data['tag'][i]}  \t|  {data['title'][i]}")
-
-    return data
+    return df
 
 
 # writes results into file
