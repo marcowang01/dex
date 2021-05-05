@@ -6,4 +6,6 @@ DO_INTEGRATION = True
 CLF_NAME = 'ComplementNB'
 PERCENT = "68.92%"
 tickers = ["PLUG"]
+
+search_term = "tsla"
 RapidAPI_KEY = "7d3fa1610amsh9c5029b73bf6468p113297jsn361e41d98786"
