@@ -1,6 +1,8 @@
-
 venv/
 .idea/
 __pycache__/
 .DS_Store
 .gitattributes
+
+scraping/YahooRapidApi/urls.csv
+scraping/YahooRapidApi/urls.json
