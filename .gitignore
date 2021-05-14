@@ -3,6 +3,7 @@ venv/
 __pycache__/
 .DS_Store
 .gitattributes
+config.py
 
 scraping/YahooRapidApi/urls.csv
 scraping/YahooRapidApi/urls.json

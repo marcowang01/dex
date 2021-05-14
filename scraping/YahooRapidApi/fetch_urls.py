@@ -23,8 +23,8 @@ def fetch_urls(ticker):
                             headers=headers,
                             params=querystring)
     response = json.loads(raw.text)
-    with open('urls.json', 'w') as json_file:
-        json.dump(response, json_file)
+    # with open('urls.json', 'w') as json_file:
+    #     json.dump(response, json_file)
 
     # grabs uuids of the first 200 results
     uuids = []
